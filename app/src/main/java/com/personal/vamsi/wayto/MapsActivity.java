@@ -7,10 +7,13 @@ import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.StrictMode;
+import android.support.design.widget.BottomSheetDialogFragment;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -48,11 +51,13 @@ import java.util.TimeZone;
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
+    DirectionsJSONParser.DirectionsResult results;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
+
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -100,7 +105,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
         mMap.addMarker(new MarkerOptions().position(new LatLng(33.918599,-83.367435)).title("Home"));
-        plotDirections(getDirections(getRequestString(new LatLng(33.918599,-83.367435),new LatLng(33.748995,-84.387982),"BICYCLING", 1505728800)));
+        plotDirections(getDirections(getRequestString(new LatLng(33.918599,-83.367435),locations[1],"driving", 1505728800)));
+
     }
 
     @SuppressWarnings("deprecation")
@@ -142,12 +148,26 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         String source = "?origin=";
         String destin = "&destination=";
         Log.v("url  ",apilink+source+start.latitude+","+start.longitude+destin+end.latitude+","+end.longitude+"&mode="+mode+"&departure_time="+time+apikey);
-        return apilink+source+start.latitude+","+start.longitude+destin+end.latitude+","+end.longitude+"&departure_time=1505728800"+"&mode="+mode+apikey;
+        return apilink+source+start.latitude+","+start.longitude+destin+end.latitude+","+end.longitude+"&mode="+mode+apikey;
     }
 
     public void plotDirections(String directions){
         DirectionsJSONParser parser = new DirectionsJSONParser();
-        onPostExecute(parser.doInBackground(directions));
+        results = parser.doInBackground(directions);
+        onPostExecute(results.routes);
+        BottomSheetDialogFragment bottomSheetDialogFragment = new BottomSheetActivity();
+        Bundle args = new Bundle();
+        args.putString("key", results.textDirections);
+        bottomSheetDialogFragment.setArguments(args);
+        bottomSheetDialogFragment.show(getSupportFragmentManager(), bottomSheetDialogFragment.getTag());
+    }
+
+    public void showDirections(View view){
+        BottomSheetDialogFragment bottomSheetDialogFragment = new BottomSheetActivity();
+        Bundle args = new Bundle();
+        args.putString("key",results.textDirections);
+        bottomSheetDialogFragment.setArguments(args);
+        bottomSheetDialogFragment.show(getSupportFragmentManager(), bottomSheetDialogFragment.getTag());
     }
 
 

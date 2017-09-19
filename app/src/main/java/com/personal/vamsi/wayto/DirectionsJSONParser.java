@@ -1,9 +1,5 @@
 package com.personal.vamsi.wayto;
 
-/**
- * Created by navat on 9/17/2017.
- */
-
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -16,29 +12,36 @@ import org.json.JSONObject;
 
 import com.google.android.gms.maps.model.LatLng;
 
-public class DirectionsJSONParser extends AsyncTask<String, Integer, List<List<HashMap<String,String>>> > {
+public class DirectionsJSONParser extends AsyncTask<String, Integer, DirectionsJSONParser.DirectionsResult> {
+
+    public class DirectionsResult{
+        List<List<HashMap<String, String>>> routes = null;
+        String textDirections = null;
+    }
 
     @Override
-    public List<List<HashMap<String, String>>> doInBackground(String... jsonData) {
+    public DirectionsResult doInBackground(String... jsonData) {
 
         JSONObject jObject;
-        List<List<HashMap<String, String>>> routes = null;
+        DirectionsResult drs = new DirectionsResult();
 
         try{
             jObject = new JSONObject(jsonData[0]);
             DirectionsJSONParser parser = new DirectionsJSONParser();
 
             // Starts parsing data
-            routes = parser.parse(jObject);
+            drs.routes = parser.parse(jObject).routes;
+            drs.textDirections=parser.parse(jObject).textDirections;
         }catch(Exception e){
             e.printStackTrace();
         }
-        return routes;
+        return drs;
     }
     /** Receives a JSONObject and returns a list of lists containing latitude and longitude */
-    public List<List<HashMap<String,String>>> parse(JSONObject jObject){
+    public DirectionsResult parse(JSONObject jObject){
 
         List<List<HashMap<String, String>>> routes = new ArrayList<List<HashMap<String,String>>>() ;
+        StringBuilder directions = new StringBuilder();
         JSONArray jRoutes = null;
         JSONArray jLegs = null;
         JSONArray jSteps = null;
@@ -46,7 +49,6 @@ public class DirectionsJSONParser extends AsyncTask<String, Integer, List<List<H
         try {
             jRoutes = jObject.getJSONArray("routes");
             JSONArray jSubsteps;
-            StringBuilder directions = new StringBuilder();
             /** Traversing all routes */
             for(int i=0;i<jRoutes.length();i++){
                 jLegs = ( (JSONObject)jRoutes.get(i)).getJSONArray("legs");
@@ -65,23 +67,22 @@ public class DirectionsJSONParser extends AsyncTask<String, Integer, List<List<H
                                 ||jSteps.getJSONObject(k).getString("travel_mode").equals("WALKING")
                                 ||jSteps.getJSONObject(k).getString("travel_mode").equals("BICYCLING"))
                         {
-                            directions.append(""+k+".)"+(String)(((JSONObject)jSteps.get(k)).get("html_instructions"))+"\n");
+                            directions.append(""+(k+1)+".)"+(String)(((JSONObject)jSteps.get(k)).get("html_instructions"))+"<br />");
                         }
                         else if (((JSONObject) jSteps.get(k)).getString("travel_mode").equals("TRANSIT"))
                         {
-                            directions.append((String)((JSONObject) jSteps.get(k)).getJSONObject("transit_details").getString("headsign")+"    BUS:  "
+                            directions.append(""+(k+1)+".)"+(String)((JSONObject) jSteps.get(k)).getJSONObject("transit_details").getString("headsign")+"    BUS:  "
                             +(String)(((JSONObject) jSteps.get(k)).getJSONObject("transit_details").getJSONObject("line").getString("name"))+"   ride for "
                             +(String)(((JSONObject) jSteps.get(k)).getJSONObject("transit_details").getString("num_stops"))+" stops and get down at "
-                                    +(String)(((JSONObject) jSteps.get(k)).getJSONObject("transit_details").getJSONObject("arrival_stop").getString("name"))+"\n");
+                                    +(String)(((JSONObject) jSteps.get(k)).getJSONObject("transit_details").getJSONObject("arrival_stop").getString("name"))+"<br />");
                         }
-                            else {
-                                jSubsteps = ((JSONObject) jSteps.get(k)).getJSONArray("steps");
-                                for(int m=0;m<jSubsteps.length();m++)
-                                {
-                                    directions.append(""+k+"."+m+".)"+jSubsteps.getJSONObject(m).get("html_instructions")+"\n");
-                                }
+                        else {
+                            jSubsteps = ((JSONObject) jSteps.get(k)).getJSONArray("steps");
+                            for(int m=0;m<jSubsteps.length();m++)
+                            {
+                                directions.append(""+(k+1)+"."+m+".)"+jSubsteps.getJSONObject(m).get("html_instructions")+"<br />");
                             }
-
+                        }
                         /** Traversing all points */
                         for(int l=0;l<list.size();l++){
                             HashMap<String, String> hm = new HashMap<String, String>();
@@ -99,8 +100,10 @@ public class DirectionsJSONParser extends AsyncTask<String, Integer, List<List<H
         }catch (Exception e){
             e.printStackTrace();
         }
-
-        return routes;
+        DirectionsResult result = new DirectionsResult();
+        result.routes = routes;
+        result.textDirections = directions.toString();
+        return result;
     }
 
     /**
