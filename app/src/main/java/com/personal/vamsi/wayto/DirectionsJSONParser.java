@@ -94,7 +94,7 @@ public class DirectionsJSONParser extends AsyncTask<String, Integer, DirectionsJ
                     routes.add(path);
                 }
             }
-            Log.v("directions",directions.toString());
+            //Log.v("directions",directions.toString());
         } catch (JSONException e) {
             e.printStackTrace();
         }catch (Exception e){

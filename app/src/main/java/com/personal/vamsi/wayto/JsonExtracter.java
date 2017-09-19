@@ -63,11 +63,11 @@ public class JsonExtracter extends AsyncTask<AssetManager,Integer,JsonExtracter.
                     if(bul_data.getJSONObject(i).getInt("id")==BulNos[j])
                     {
                         builNames[j]=bul_data.getJSONObject(i).getString("name");
-                        Log.v("Building name",builNames[j]);
+                        //Log.v("Building name",builNames[j]);
                         latCord[j]=bul_data.getJSONObject(i).getJSONObject("location").getDouble("lat");
-                        Log.v("Lat Cord","["+j+"]"+" = "+latCord[j]);
+                        //Log.v("Lat Cord","["+j+"]"+" = "+latCord[j]);
                         longCord[j]=bul_data.getJSONObject(i).getJSONObject("location").getDouble("lng");
-                        Log.v("Long Cord","["+j+"]"+" = "+longCord[j]);
+                        //Log.v("Long Cord","["+j+"]"+" = "+longCord[j]);
                         locations[j]= new LatLng(latCord[j],longCord[j]);
 
                     }

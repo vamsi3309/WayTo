@@ -87,7 +87,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(locations[0], 15.0f));
         Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
         calendar.clear();
-
         calendar.set(2017,9,18, 10, 15);
         long secondsSinceEpoch = calendar.getTimeInMillis() / 1000L;
        /* LocationManager mLocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
@@ -105,7 +104,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
         mMap.addMarker(new MarkerOptions().position(new LatLng(33.918599,-83.367435)).title("Home"));
-        plotDirections(getDirections(getRequestString(new LatLng(33.918599,-83.367435),locations[1],"driving", 1505728800)));
+        plotDirections(getDirections(getRequestString(new LatLng(33.918599,-83.367435),locations[1],"walking", 1505728800)));
 
     }
 
