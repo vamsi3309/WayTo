@@ -2,7 +2,6 @@ package com.personal.vamsi.wayto;
 
 import android.content.res.AssetManager;
 import android.os.AsyncTask;
-import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
 
@@ -11,24 +10,31 @@ import org.json.JSONException;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Objects;
 
 
-/**
- * Created by navat on 9/17/2017.
- */
-
-public class JsonExtracter extends AsyncTask<AssetManager,Integer,JsonExtracter.Result> {
-    public class Result{
-        public LatLng[] locations;
-        public String[] builNames;
+public class JsonExtracter extends AsyncTask<AssetManager,Integer,JsonExtracter.JsonResult> {
+    public class JsonResult {
+        Schedule schedule;
+        Buildings buildings;
+    }
+    public class Schedule{
+        public String[] builNames,classNames,roomNos,startDay,startTime,endTime,endDay;
+        double[] lat,lon;
+        JSONArray scharray,bularray;
+        LatLng[] schLocations;
+    }
+    public class Buildings{
+        int[] id;
+        LatLng[] locations;
+        String[] name,code,searchText;
+        JSONArray jsonArray;
     }
     private LatLng[] locations;
     private String[] builNames;
-    private Result getExtractedData(AssetManager ass){
-        Result res = new Result();
+    private JsonResult getExtractedData(AssetManager ass){
+        JsonResult res = new JsonResult();
         try {
-            AssetManager assetManager= ass;
+            AssetManager assetManager = ass;
             InputStream sc_read = assetManager.open("schedule.json");
             int sc_size = sc_read.available();
             byte[] buf_sc = new byte[sc_size];
@@ -45,9 +51,8 @@ public class JsonExtracter extends AsyncTask<AssetManager,Integer,JsonExtracter.
             String bul_read = new String(buf_bl, "UTF-8");
             JSONArray bul_data = new JSONArray(bul_read);
 
-
-            Double[] latCord = new Double[sch_data.length()];
-            Double[] longCord = new Double[sch_data.length()];
+            double[] latCord = new double[sch_data.length()];
+            double[] longCord = new double[sch_data.length()];
             builNames = new String[sch_data.length()];
             int[] BulNos = new int[sch_data.length()];
             for(int i=0;i<sch_data.length();i++) {
@@ -56,9 +61,10 @@ public class JsonExtracter extends AsyncTask<AssetManager,Integer,JsonExtracter.
             }
 
             locations = new LatLng[sch_data.length()];
-            for (int j=0;j<BulNos.length;j++)
+
+            for (int i=0;i<bul_data.length();i++)
             {
-                for (int i=0;i<bul_data.length();i++)
+                for (int j=0;j<BulNos.length;j++)
                 {
                     if(bul_data.getJSONObject(i).getInt("id")==BulNos[j])
                     {
@@ -73,9 +79,62 @@ public class JsonExtracter extends AsyncTask<AssetManager,Integer,JsonExtracter.
                     }
                 }
             }
+            String[] temp1 = new String[sch_data.length()];
+            String[] temp2 = new String[sch_data.length()];
+            String[] temp3 = new String[sch_data.length()];
+            String[] temp4 = new String[sch_data.length()];
+            String[] temp5 = new String[sch_data.length()];
+            String[] temp6 = new String[sch_data.length()];
+            for(int i=0;i<sch_data.length();i++)
+            {
+                temp1[i]=sch_data.getJSONObject(i).getString("Name");
+                temp2[i]=sch_data.getJSONObject(i).getString("Room");
+                temp3[i]=sch_data.getJSONObject(i).getJSONObject("start").getString("time");
+                temp4[i]=sch_data.getJSONObject(i).getJSONObject("start").getString("day");
+                temp5[i]=sch_data.getJSONObject(i).getJSONObject("end").getString("time");
+                temp6[i]=sch_data.getJSONObject(i).getJSONObject("end").getString("day");
+            }
 
-            res.locations= locations;
-            res.builNames= builNames;
+
+            int[] tempid=new int[bul_data.length()];
+            String[] tempname= new String[bul_data.length()];
+            String[] tempcode= new String[bul_data.length()];
+            String[] tempsearch= new String[bul_data.length()];
+            LatLng[] templocations = new LatLng[bul_data.length()];
+            for(int i=0;i<bul_data.length();i++)
+            {
+                tempname[i]=bul_data.getJSONObject(i).getString("name");
+                tempid[i]=bul_data.getJSONObject(i).getInt("id");
+                templocations[i]=new LatLng(bul_data.getJSONObject(i).getJSONObject("location").getDouble("lat"),
+                        bul_data.getJSONObject(i).getJSONObject("location").getDouble("lng"));
+                tempcode[i]=bul_data.getJSONObject(i).getString("code");
+                tempsearch[i]=bul_data.getJSONObject(i).getString("searchText");
+            }
+
+            Buildings buildings = new Buildings();
+            buildings.id=tempid;
+            buildings.name=tempname;
+            buildings.code=tempcode;
+            buildings.locations=templocations;
+            buildings.searchText=tempsearch;
+            buildings.jsonArray=bul_data;
+
+            Schedule sch = new Schedule();
+            sch.schLocations=locations;
+            sch.builNames=builNames;
+            sch.scharray=sch_data;
+            sch.bularray=bul_data;
+            sch.lat=latCord;
+            sch.lon=longCord;
+            sch.classNames=temp1;
+            sch.roomNos=temp2;
+            sch.startTime=temp3;
+            sch.startDay=temp4;
+            sch.endTime=temp5;
+            sch.endDay=temp6;
+
+            res.buildings=buildings;
+            res.schedule=sch;
         } catch (IOException e) {
             e.printStackTrace();
         } catch (JSONException e) {
@@ -85,7 +144,7 @@ public class JsonExtracter extends AsyncTask<AssetManager,Integer,JsonExtracter.
     }
 
     @Override
-    public JsonExtracter.Result doInBackground(AssetManager... ass) {
+    public JsonResult doInBackground(AssetManager... ass) {
         return getExtractedData(ass[0]);
     }
 }

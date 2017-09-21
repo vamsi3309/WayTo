@@ -1,13 +1,76 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="match_parent"
+
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <TextView
-        android:id="@+id/textView"
-        android:layout_width="match_parent"
+    <Button
+        android:id="@+id/mon"
+        android:layout_width="411dp"
         android:layout_height="50dp"
-        android:text="This is schedule"
-        android:textSize="24sp"
-        android:textStyle="bold" />
-</LinearLayout>
+        android:text="Monday"
+        tools:layout_conversion_absoluteX="0dp"
+        tools:layout_conversion_absoluteY="0dp"
+        tools:layout_conversion_absoluteWidth="411dp"
+        tools:layout_conversion_absoluteHeight="50dp"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/tue"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/tue"
+        android:layout_width="411dp"
+        android:layout_height="50dp"
+        android:text="Tuesday"
+        tools:layout_editor_absoluteX="0dp"
+        tools:layout_conversion_absoluteX="0dp"
+        tools:layout_conversion_absoluteY="50dp"
+        tools:layout_conversion_absoluteWidth="411dp"
+        tools:layout_conversion_absoluteHeight="50dp"
+        app:layout_constraintBottom_toTopOf="@+id/wed"
+        app:layout_constraintTop_toBottomOf="@+id/mon" />
+
+    <Button
+        android:id="@+id/wed"
+        android:layout_width="411dp"
+        android:layout_height="50dp"
+        android:text="Wednesday"
+        tools:layout_editor_absoluteX="0dp"
+        tools:layout_conversion_absoluteX="0dp"
+        tools:layout_conversion_absoluteY="100dp"
+        tools:layout_conversion_absoluteWidth="411dp"
+        tools:layout_conversion_absoluteHeight="50dp"
+        app:layout_constraintBottom_toTopOf="@+id/thr"
+        app:layout_constraintTop_toBottomOf="@+id/tue" />
+
+    <Button
+        android:id="@+id/thr"
+        android:layout_width="411dp"
+        android:layout_height="50dp"
+        android:text="Thursday"
+        tools:layout_editor_absoluteX="0dp"
+        tools:layout_conversion_absoluteX="0dp"
+        tools:layout_conversion_absoluteY="150dp"
+        tools:layout_conversion_absoluteWidth="411dp"
+        tools:layout_conversion_absoluteHeight="50dp"
+        app:layout_constraintBottom_toTopOf="@+id/fri"
+        app:layout_constraintTop_toBottomOf="@+id/wed" />
+
+    <Button
+        android:id="@+id/fri"
+        android:layout_width="411dp"
+        android:layout_height="50dp"
+        android:text="Friday"
+        tools:layout_editor_absoluteX="0dp"
+        tools:layout_conversion_absoluteX="0dp"
+        tools:layout_conversion_absoluteY="200dp"
+        tools:layout_conversion_absoluteWidth="411dp"
+        tools:layout_conversion_absoluteHeight="50dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/thr" />
+
+</android.support.constraint.ConstraintLayout>

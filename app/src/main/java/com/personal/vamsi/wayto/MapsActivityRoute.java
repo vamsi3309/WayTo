@@ -1,6 +1,6 @@
 package com.personal.vamsi.wayto;
 
-import android.content.res.AssetManager;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.StrictMode;
 import android.support.design.widget.BottomSheetDialogFragment;
@@ -13,6 +13,8 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
@@ -29,34 +31,20 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.TimeZone;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+
+public class MapsActivityRoute extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
     DirectionsJSONParser.DirectionsResult results;
-    JsonExtracter.Schedule schedule;
-    JsonExtracter.Buildings buildings;
-    StringBuilder textDirections = new StringBuilder();
-    LatLng[] locations;
-    String[] builNames;
-    /*public MapsActivity(JsonExtracter.Schedule sch){
-        schedule=sch;
-        locations=schedule.schLocations;
-        builNames=schedule.builNames;
-    }
-    public MapsActivity(){
-
-    }*/
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_maps);
-
+        setContentView(R.layout.activity_maps_route);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -76,58 +64,23 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-       /* AssetManager assetManager = getResources().getAssets();
-        JsonExtracter jsonExtracter = new JsonExtracter();
-        JsonExtracter.JsonResult jsonResult = jsonExtracter.doInBackground(assetManager);*/
-        String[] builNames = getIntent().getStringArrayExtra("names");
-        double[] lat = getIntent().getExtras().getDoubleArray("lat");
-        double[] lon = getIntent().getDoubleArrayExtra("lon");
-        long[] starttime = getIntent().getExtras().getLongArray("epochstime");
-        long[] sortTime = starttime;
-        Arrays.sort(sortTime);
-        //LatLng[] locations = new LatLng[getIntent().getDoubleArrayExtra("lat"),];
-        LatLng[] locations = new LatLng[sortTime.length];
-        String[] names = new String[sortTime.length];
-        for(int i=0;i<sortTime.length;i++){
-            for(int j=0;j<sortTime.length;j++){
-                if(sortTime[i]==starttime[j]){
-                    locations[i] =  new LatLng(lat[j],lon[j]);
-                    names[i]=builNames[j];
-                }
-            }
-        }
+        String fromName=getIntent().getExtras().getString("fromname");
+        LatLng fromLocation = new LatLng(getIntent().getDoubleExtra("fromlat",0.0),getIntent().getDoubleExtra("fromlong",0.0));
+        String toName=getIntent().getStringExtra("toname");
+        LatLng toLocation = new LatLng(getIntent().getDoubleExtra("tolat",0.0),getIntent().getDoubleExtra("tolong",0.0));
+        String mode = getIntent().getStringExtra("mode");
+        mMap.addMarker(new MarkerOptions().position(fromLocation).title(fromName));
+        mMap.addMarker(new MarkerOptions().position(toLocation).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)).title(toName));
+        // Add a marker in Sydney and move the camera
+        LatLng sydney = new LatLng(-34, 151);
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(fromLocation));
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(fromLocation, 15.0f));
+        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("America/New_York"));
+        calendar.clear();
+        calendar.set(2017,9,20, 17, 15);
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
-        for(int i=0;i<sortTime.length;i++)
-            mMap.addMarker(new MarkerOptions().position(locations[i]).title(names[i]));
-        plotDirections(getDirections(getRequestString(new LatLng(33.918599,-83.367435),locations[0],"transit", starttime[0])));
-        for(int i=0;i<sortTime.length-1;i++){
-            plotDirections(getDirections(getRequestString(locations[i],locations[i+1],"transit", starttime[i+1])));
-        }
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(locations[0], 15.0f));
-       /* LocationManager mLocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-        Location locationGPS=mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);;
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }*/
-
-       /* mMap.addMarker(new MarkerOptions().position(new LatLng(33.918599,-83.367435)).title("Home"));
-        plotDirections(getDirections(getRequestString(new LatLng(33.918599,-83.367435),new LatLng(lat[0],lon[0]),"transit", 1508534117)));
-        plotDirections(getDirections(getRequestString(new LatLng(lat[0],lon[0]),new LatLng(lat[1],lon[1]),"transit", 1508534117)));*/
-
-        BottomSheetDialogFragment bottomSheetDialogFragment = new BottomSheetActivity();
-        Bundle args = new Bundle();
-        args.putString("key", textDirections.toString());
-        bottomSheetDialogFragment.setArguments(args);
-        bottomSheetDialogFragment.show(getSupportFragmentManager(), bottomSheetDialogFragment.getTag());
-
+        plotDirections(getDirections(getRequestString(fromLocation,toLocation,mode, calendar.getTimeInMillis()/1000L)));
     }
 
     @SuppressWarnings("deprecation")
@@ -168,22 +121,25 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         String apikey = "&key=AIzaSyBb5uFimk3fSxnf77F81qrFs3I91BAAcjM";
         String source = "?origin=";
         String destin = "&destination=";
-        String dtime="&arrival_time=";
-        Log.v("url  ",apilink+source+start.latitude+","+start.longitude+destin+end.latitude+","+end.longitude+dtime+time+"&mode="+mode+apikey);
-        return apilink+source+start.latitude+","+start.longitude+destin+end.latitude+","+end.longitude+dtime+time+"&mode="+mode+apikey;
+        Log.v("url  ",apilink+source+start.latitude+","+start.longitude+destin+end.latitude+","+end.longitude+"&departure_time="+time+"&mode="+mode+apikey);
+        return apilink+source+start.latitude+","+start.longitude+destin+end.latitude+","+end.longitude+"&departure_time="+time+"&mode="+mode+apikey;
     }
 
     public void plotDirections(String directions){
         DirectionsJSONParser parser = new DirectionsJSONParser();
         results = parser.doInBackground(directions);
         onPostExecute(results.routes);
-        textDirections.append(results.textDirections+"<br />");
+        BottomSheetDialogFragment bottomSheetDialogFragment = new BottomSheetActivity();
+        Bundle args = new Bundle();
+        args.putString("key", results.textDirections);
+        bottomSheetDialogFragment.setArguments(args);
+        bottomSheetDialogFragment.show(getSupportFragmentManager(), bottomSheetDialogFragment.getTag());
     }
 
     public void showDirections(View view){
         BottomSheetDialogFragment bottomSheetDialogFragment = new BottomSheetActivity();
         Bundle args = new Bundle();
-        args.putString("key",textDirections.toString());
+        args.putString("key",results.textDirections);
         bottomSheetDialogFragment.setArguments(args);
         bottomSheetDialogFragment.show(getSupportFragmentManager(), bottomSheetDialogFragment.getTag());
     }
@@ -222,7 +178,4 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         // Drawing polyline in the Google Map for the i-th route
         mMap.addPolyline(lineOptions);
     }
-
-
 }
-

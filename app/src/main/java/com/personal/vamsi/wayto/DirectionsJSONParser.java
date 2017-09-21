@@ -35,6 +35,7 @@ public class DirectionsJSONParser extends AsyncTask<String, Integer, DirectionsJ
         }catch(Exception e){
             e.printStackTrace();
         }
+        Log.v("textDirections",drs.textDirections);
         return drs;
     }
     /** Receives a JSONObject and returns a list of lists containing latitude and longitude */
@@ -63,6 +64,11 @@ public class DirectionsJSONParser extends AsyncTask<String, Integer, DirectionsJ
                         String polyline = "";
                         polyline = (String)((JSONObject)((JSONObject)jSteps.get(k)).get("polyline")).get("points");
                         List<LatLng> list = decodePoly(polyline);
+                        if(!jSteps.getJSONObject(k).getString("travel_mode").equals("WALKING"))
+                        {
+                            directions.append("<br />"+"Departure Time: "+jLegs.getJSONObject(i).getJSONObject("departure_time").getString("text")+"<br />");
+                            directions.append("Arrival Time: "+jLegs.getJSONObject(i).getJSONObject("arrival_time").getString("text")+"<br /><br />");
+                        }
                         if(jSteps.getJSONObject(k).getString("travel_mode").equals("DRIVING")
                                 ||jSteps.getJSONObject(k).getString("travel_mode").equals("WALKING")
                                 ||jSteps.getJSONObject(k).getString("travel_mode").equals("BICYCLING"))

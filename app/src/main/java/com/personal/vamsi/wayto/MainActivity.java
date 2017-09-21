@@ -1,7 +1,6 @@
 package com.personal.vamsi.wayto;
 
-import android.app.ActionBar;
-import android.content.Intent;
+
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -19,6 +18,7 @@ public class MainActivity extends AppCompatActivity{
     private Toolbar toolbar;
     private TabLayout tabLayout;
     private ViewPager viewPager;
+    JsonExtracter.JsonResult jsonResult;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         //super.onCreate(savedInstanceState);
@@ -31,16 +31,27 @@ public class MainActivity extends AppCompatActivity{
         tabLayout = (TabLayout) findViewById(R.id.tabs);
         tabLayout.setupWithViewPager(viewPager);
         super.onCreate(savedInstanceState);
-        Intent maps =new Intent(this,MapsActivity.class);
-        startActivity(maps);
+
     }
-
-
 
 
     private void setupViewPager(ViewPager viewPager) {
         ViewPagerAdapter adapter = new ViewPagerAdapter(getSupportFragmentManager());
-        adapter.addFragment(new ScheduleFragment(), "Plan My Schedule");
+        Fragment schfrag = new ScheduleFragment();
+      /*  Bundle bundle = new Bundle();
+        bundle.putDoubleArray("lat",jsonResult.schedule.lat);
+        bundle.putDoubleArray("lon",jsonResult.schedule.lon);
+        bundle.putStringArray("builNames",jsonResult.schedule.builNames);
+        bundle.putStringArray("classNames",jsonResult.schedule.classNames);
+        bundle.putStringArray("roomNos",jsonResult.schedule.roomNos);
+        bundle.putStringArray("startTime",jsonResult.schedule.startTime);
+        bundle.putStringArray("startDay",jsonResult.schedule.startDay);
+        bundle.putStringArray("endTime",jsonResult.schedule.endTime);
+        bundle.putStringArray("endDay",jsonResult.schedule.endDay);
+        bundle.putString("schArray",jsonResult.schedule.scharray.toString());
+        bundle.putString("bulArray",jsonResult.schedule.bularray.toString());
+        schfrag.setArguments(bundle);*/
+        adapter.addFragment(schfrag, "Plan My Schedule");
         adapter.addFragment(new RouteFragment(), "Plan My Route");
         viewPager.setAdapter(adapter);
     }
