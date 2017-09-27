@@ -1,5 +1,6 @@
 package com.personal.vamsi.wayto
 
+import android.content.Intent
 import android.content.res.AssetManager
 import android.graphics.Color
 import android.os.StrictMode
@@ -13,6 +14,7 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.maps.model.PolylineOptions
@@ -76,6 +78,42 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
         /* AssetManager assetManager = getResources().getAssets();
         JsonExtracter jsonExtracter = new JsonExtracter();
         JsonExtracter.JsonResult jsonResult = jsonExtracter.doInBackground(assetManager);*/
+        if(intent.getStringExtra("action").equals("schedule")){
+            plotSchedule(intent)
+        }
+        else if (intent.getStringExtra("action").equals("navigation"))
+        {
+            plotNavigation(intent)
+        }
+
+    }
+
+    fun plotNavigation(intent: Intent){
+        val fromName = intent.extras.getString("fromname")
+        val fromLocation = LatLng(intent.getDoubleExtra("fromlat", 0.0), intent.getDoubleExtra("fromlong", 0.0))
+        val toName = intent.getStringExtra("toname")
+        val toLocation = LatLng(intent.getDoubleExtra("tolat", 0.0), intent.getDoubleExtra("tolong", 0.0))
+        val mode = intent.getStringExtra("mode")
+        mMap!!.addMarker(MarkerOptions().position(fromLocation).title(fromName))
+        mMap!!.addMarker(MarkerOptions().position(toLocation).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)).title(toName))
+        // Add a marker in Sydney and move the camera
+        mMap!!.moveCamera(CameraUpdateFactory.newLatLng(fromLocation))
+        mMap!!.moveCamera(CameraUpdateFactory.newLatLngZoom(fromLocation, 15.0f))
+        val calendar = Calendar.getInstance(TimeZone.getTimeZone("America/New_York"))
+        calendar.clear()
+        calendar.set(2017, 9, 20, 17, 15)
+        val policy = StrictMode.ThreadPolicy.Builder().permitAll().build()
+        StrictMode.setThreadPolicy(policy)
+        plotDirections(getDirections(getRequestString(fromLocation, toLocation, mode, calendar.timeInMillis / 1000L)))
+        val bottomSheetDialogFragment = BottomSheetActivity()
+        val args = Bundle()
+        args.putString("key", textDirections.toString())
+        bottomSheetDialogFragment.arguments = args
+        bottomSheetDialogFragment.show(supportFragmentManager, bottomSheetDialogFragment.tag)
+    }
+
+    fun plotSchedule(intent: Intent){
+
         val builNames = intent.getStringArrayExtra("names")
         val lat = intent.extras.getDoubleArray("lat")
         val lon = intent.getDoubleArrayExtra("lon")
@@ -134,6 +172,9 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
         bottomSheetDialogFragment.show(supportFragmentManager, bottomSheetDialogFragment.tag)
 
     }
+
+
+
 
     fun getDirections(request: String): String {
         val sb = StringBuilder()

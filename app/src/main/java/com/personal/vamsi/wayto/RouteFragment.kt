@@ -20,11 +20,11 @@ import java.util.TimeZone
 
 
 class RouteFragment : Fragment() {
-    internal var buildings: JsonExtracter2.Buildings?=null
+    internal var buildings: JsonExtracter.Buildings?=null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val assetManager = resources.assets
-        buildings = JsonExtracter2().doInBackground(assetManager)
+        buildings = JsonExtracter().doInBackground(assetManager).buildings
     }
 
 
@@ -60,8 +60,8 @@ class RouteFragment : Fragment() {
         val directions = view.findViewById<Button>(R.id.button2)
         directions.setOnClickListener {
             val fromBuil = buildings!!.searchText
-            val intent = Intent(activity, MapsActivityRoute::class.java)
-
+            val intent = Intent(activity, MapsActivity::class.java)
+            intent.putExtra("action","navigation")
             for (i in 0..fromBuil!!.size-1) {
                 if (fromBuil!![i] == fromView.text.toString()) {
                     intent.putExtra("name", buildings!!.name!![i])

@@ -71,6 +71,7 @@ class ScheduleFragment : Fragment() {
             val newPage = view!!.findViewById<View>(R.id.mon) as Button
             newPage.setOnClickListener {
                 val intent = Intent(activity, MapsActivity::class.java)
+                intent.putExtra("action","schedule")
                 val names = ArrayList<String>()
                 val classnames = ArrayList<String>()
                 val lat = ArrayList<Double>()
@@ -102,7 +103,7 @@ class ScheduleFragment : Fragment() {
                     cnames[i]= classnames[i]
                 }
                 if (names.size == 0){
-                    Toast.makeText(context,"No classes for today",Toast.LENGTH_LONG).show()
+                    Toast.makeText(context,"No classes for the day",Toast.LENGTH_LONG).show()
                 }
                 else {
                     intent.putExtra("names", name)
@@ -319,5 +320,5 @@ class ScheduleFragment : Fragment() {
     }
 
 
-}// Required empty public constructor
+}
 
