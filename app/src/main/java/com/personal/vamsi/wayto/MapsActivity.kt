@@ -1,14 +1,20 @@
 package com.personal.vamsi.wayto
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.res.AssetManager
 import android.graphics.Color
+import android.location.LocationManager
 import android.os.StrictMode
 import android.support.design.widget.BottomSheetDialogFragment
 import android.support.v4.app.FragmentActivity
 import android.os.Bundle
+import android.support.annotation.NonNull
+import android.support.v4.app.ActivityCompat
 import android.util.Log
 import android.view.View
+import android.widget.Toast
 
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -56,7 +62,7 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
-
+        //val mGeoDataClient
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         val mapFragment = supportFragmentManager
                 .findFragmentById(R.id.map) as SupportMapFragment
@@ -78,22 +84,42 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
         /* AssetManager assetManager = getResources().getAssets();
         JsonExtracter jsonExtracter = new JsonExtracter();
         JsonExtracter.JsonResult jsonResult = jsonExtracter.doInBackground(assetManager);*/
-        if(intent.getStringExtra("action").equals("schedule")){
-            plotSchedule(intent)
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) !=
+                PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission
+        (this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION), 1)
+        }
+        else if(intent.getStringExtra("action").equals("schedule")){
+            plotSchedule()
         }
         else if (intent.getStringExtra("action").equals("navigation"))
         {
-            plotNavigation(intent)
+            plotNavigation()
         }
+
 
     }
 
-    fun plotNavigation(intent: Intent){
-        val fromName = intent.extras.getString("fromname")
-        val fromLocation = LatLng(intent.getDoubleExtra("fromlat", 0.0), intent.getDoubleExtra("fromlong", 0.0))
+    fun plotNavigation(){
+        val mLocationManager : LocationManager = getSystemService(LOCATION_SERVICE) as LocationManager
+        val locationGPS=mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+        var fromName=""
+        var fromLocation=LatLng(0.0,0.0)
+        if(intent.getStringExtra("fromname").equals("My location")){
+             fromName = "My Location"
+             fromLocation = LatLng(locationGPS.latitude,locationGPS.longitude)
+        }
+        else {
+            fromName = intent.extras.getString("fromname")
+            fromLocation = LatLng(intent.getDoubleExtra("fromlat", 0.0), intent.getDoubleExtra("fromlong", 0.0))
+        }
         val toName = intent.getStringExtra("toname")
         val toLocation = LatLng(intent.getDoubleExtra("tolat", 0.0), intent.getDoubleExtra("tolong", 0.0))
         val mode = intent.getStringExtra("mode")
+
+
         mMap!!.addMarker(MarkerOptions().position(fromLocation).title(fromName))
         mMap!!.addMarker(MarkerOptions().position(toLocation).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)).title(toName))
         // Add a marker in Sydney and move the camera
@@ -112,7 +138,38 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
         bottomSheetDialogFragment.show(supportFragmentManager, bottomSheetDialogFragment.tag)
     }
 
-    fun plotSchedule(intent: Intent){
+
+    private var mLocationPermissionGranted: Boolean = false
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        mLocationPermissionGranted = false;
+        when (requestCode) {
+             1 -> {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.size > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    mLocationPermissionGranted = true;
+                    if(intent.getStringExtra("action").equals("schedule")){
+                        plotSchedule()
+                    }
+                    else if (intent.getStringExtra("action").equals("navigation"))
+                    {
+                        plotNavigation()
+                    }
+                }
+
+                 else
+                {
+                    Toast.makeText(this,"Location permissions denied",Toast.LENGTH_LONG).show()
+                    val startMain = Intent(this,MainActivity::class.java)
+                    startActivity(startMain)
+                }
+            }
+        }
+
+    }
+
+    fun plotSchedule(){
 
         val builNames = intent.getStringArrayExtra("names")
         val lat = intent.extras.getDoubleArray("lat")
@@ -137,20 +194,11 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
                 }
             }
         }
-        val policy = StrictMode.ThreadPolicy.Builder().permitAll().build()
-        StrictMode.setThreadPolicy(policy)
-        for (i in 0..starttime.size-1)
-            mMap!!.addMarker(MarkerOptions().position(locations[i]!!).title(names[i]))
-        textDirections.append("Class "+1+" :: Class name "+cnames[0]+"<br /><br />")
-        plotDirections(getDirections(getRequestString(LatLng(33.937877,-83.367305), locations[0]!!, "transit", starttime[0])))
-        for (i in 0..starttime.size - 2) {
-            textDirections.append("Class "+(i+2)+" :: Class name "+cnames[i+1]+"<br /><br />")
-            plotDirections(getDirections(getRequestString(locations[i]!!, locations[i + 1]!!, "transit", starttime[i + 1])))
-        }
-        mMap!!.moveCamera(CameraUpdateFactory.newLatLngZoom(locations[0], 15.0f))
-        /* LocationManager mLocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-        Location locationGPS=mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);;
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        val mLocationManager : LocationManager = getSystemService(LOCATION_SERVICE) as LocationManager
+        val locationGPS=mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) !=
+                PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission
+        (this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
             //    ActivityCompat#requestPermissions
             // here to request the missing permissions, and then overriding
@@ -159,7 +207,21 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
             // to handle the case where the user grants the permission. See the documentation
             // for ActivityCompat#requestPermissions for more details.
             return;
-        }*/
+        }
+        val policy = StrictMode.ThreadPolicy.Builder().permitAll().build()
+        StrictMode.setThreadPolicy(policy)
+        for (i in 0..starttime.size-1)
+            mMap!!.addMarker(MarkerOptions().position(locations[i]!!).title(names[i]))
+        textDirections.append("Class "+1+" :: Class name "+cnames[0]+"<br /><br />")
+        plotDirections(getDirections(getRequestString(LatLng(locationGPS.latitude,locationGPS.longitude), locations[0]!!, "transit", starttime[0])))
+        for (i in 0..starttime.size - 2) {
+            textDirections.append("Class "+(i+2)+" :: Class name "+cnames[i+1]+"<br /><br />")
+            plotDirections(getDirections(getRequestString(locations[i]!!, locations[i + 1]!!, "transit", starttime[i + 1])))
+        }
+        mMap!!.moveCamera(CameraUpdateFactory.newLatLngZoom(locations[0], 15.0f))
+
+
+
 
         /* mMap.addMarker(new MarkerOptions().position(new LatLng(33.918599,-83.367435)).title("Home"));
         plotDirections(getDirections(getRequestString(new LatLng(33.918599,-83.367435),new LatLng(lat[0],lon[0]),"transit", 1508534117)));

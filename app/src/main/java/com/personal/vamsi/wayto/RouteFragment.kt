@@ -9,11 +9,7 @@ import android.text.InputType
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ArrayAdapter
-import android.widget.AutoCompleteTextView
-import android.widget.Button
-import android.widget.EditText
-import android.widget.TimePicker
+import android.widget.*
 
 import java.util.Calendar
 import java.util.TimeZone
@@ -34,17 +30,27 @@ class RouteFragment : Fragment() {
         val modes = arrayOf("driving", "walking", "transit", "bicycling")
         val view = inflater!!.inflate(R.layout.route_fragment, container, false)
         val fromView = view.findViewById<View>(R.id.From) as AutoCompleteTextView
-        val adapter: ArrayAdapter<String>? =
+        var locationSuggestions = buildings?.searchText!!.plus("My location")
+        // array adapter for from textview
+        val fromadapter: ArrayAdapter<String>? =
                 ArrayAdapter(
                         activity,
                 android.R.layout.simple_list_item_1,
-                buildings?.searchText!!)
+                locationSuggestions)
+        // array adapter for to textview
+        val toadapter: ArrayAdapter<String>? =
+                ArrayAdapter(
+                        activity,
+                android.R.layout.simple_list_item_1,
+                        buildings?.searchText!!)
+        // array adapter for mode textView
         val modearray = ArrayAdapter(activity, android.R.layout.simple_list_item_1, modes)
 
-        fromView.setAdapter(adapter)
+        fromView.setText("From: My location")
+        fromView.setAdapter(fromadapter)
 
         val toView = view.findViewById<View>(R.id.To) as AutoCompleteTextView
-        toView.setAdapter(adapter)
+        toView.setAdapter(toadapter)
 
         val mode = view.findViewById<View>(R.id.mode) as AutoCompleteTextView
         mode.setAdapter(modearray)
@@ -62,23 +68,41 @@ class RouteFragment : Fragment() {
             val fromBuil = buildings!!.searchText
             val intent = Intent(activity, MapsActivity::class.java)
             intent.putExtra("action","navigation")
-            for (i in 0..fromBuil!!.size-1) {
-                if (fromBuil!![i] == fromView.text.toString()) {
-                    intent.putExtra("name", buildings!!.name!![i])
-                    intent.putExtra("fromlat", buildings!!.locations!![i].latitude)
-                    intent.putExtra("fromlong", buildings!!.locations!![i].longitude)
-                    intent.putExtra("mode", mode.text.toString())
-                }
+            if (fromView.text.toString().equals("From: My location")||fromView.text.toString().equals("My location")){
+                intent.putExtra("fromname","My location")
             }
-            for (i in 0..fromBuil.size-1) {
-                if (fromBuil!![i] == toView.text.toString()) {
-                    intent.putExtra("toname", buildings!!.name!![i])
-                    intent.putExtra("tolat", buildings!!.locations!![i].latitude)
-                    intent.putExtra("tolong", buildings!!.locations!![i].longitude)
-                }
+            else if(fromBuil!!.contains(fromView.text.toString())){
+                intent.putExtra("fromname", buildings!!.name!![fromBuil!!.indexOf(fromView.text.toString())])
+                intent.putExtra("fromlat", buildings!!.locations!![fromBuil!!.indexOf(fromView.text.toString())].latitude)
+                intent.putExtra("fromlong", buildings!!.locations!![fromBuil!!.indexOf(fromView.text.toString())].longitude)
+            }
+            else{
+                Toast.makeText(context,"Invalid from location. Using GPS location!!!",Toast.LENGTH_LONG).show()
+                intent.putExtra("fromname","My location")
             }
 
-            startActivity(intent)
+            if(fromBuil!!.contains(toView.text.toString())) {
+                intent.putExtra("toname", buildings!!.name!![fromBuil!!.indexOf(toView.text.toString())])
+                intent.putExtra("tolat", buildings!!.locations!![fromBuil!!.indexOf(toView.text.toString())].latitude)
+                intent.putExtra("tolong", buildings!!.locations!![fromBuil!!.indexOf(toView.text.toString())].longitude)
+
+            }
+            else{
+                Toast.makeText(context,"Invalid 'To Location'. Please try again!!!",Toast.LENGTH_LONG).show()
+                intent.putExtra("toname", "UGA")
+                intent.putExtra("tolat", 33.9480053)
+                intent.putExtra("tolong",-83.3773221)
+            }
+            if (modes.contains(mode.text.toString())){
+                intent.putExtra("mode", mode.text.toString())
+                startActivity(intent)
+            }
+            else{
+                Toast.makeText(context,"Invalid 'Transport Mode'. Using driving as default!!!",Toast.LENGTH_LONG).show()
+                intent.putExtra("mode","driving")
+                startActivity(intent)
+            }
+
         }
         return view
     }

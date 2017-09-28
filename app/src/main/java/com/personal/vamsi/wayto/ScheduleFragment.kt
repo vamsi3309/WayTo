@@ -5,6 +5,8 @@ import android.content.Intent
 import android.content.res.AssetManager
 import android.os.Bundle
 import android.support.v4.app.Fragment
+import android.support.v7.widget.CardView
+import android.transition.TransitionManager
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -68,6 +70,11 @@ class ScheduleFragment : Fragment() {
                 Log.d("end time:   ", "" + ecal.timeInMillis / 1000L)
             }
 
+
+            val cv = view.findViewById<View>(R.id.card_view)
+            val tv = view.findViewById<View>(R.id.details)
+
+            /*
             val newPage = view!!.findViewById<View>(R.id.mon) as Button
             newPage.setOnClickListener {
                 val intent = Intent(activity, MapsActivity::class.java)
@@ -311,7 +318,7 @@ class ScheduleFragment : Fragment() {
                     startActivity(intent)
                 }
             }
-
+*/
         } catch (e: Exception) {
             e.printStackTrace()
         }

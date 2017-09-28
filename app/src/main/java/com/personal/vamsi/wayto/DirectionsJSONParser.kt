@@ -34,7 +34,7 @@ class DirectionsJSONParser : AsyncTask<String, Int, DirectionsJSONParser.Directi
             e.printStackTrace()
         }
 
-        Log.v("textDirections", drs.textDirections)
+        //Log.v("textDirections", drs.textDirections)
         return drs
     }
 
@@ -50,6 +50,7 @@ class DirectionsJSONParser : AsyncTask<String, Int, DirectionsJSONParser.Directi
         try {
             jRoutes = jObject.getJSONArray("routes")
             var jSubsteps: JSONArray
+
             /** Traversing all routes  */
             for (i in 0..jRoutes!!.length() - 1) {
                 jLegs = (jRoutes.get(i) as JSONObject).getJSONArray("legs")

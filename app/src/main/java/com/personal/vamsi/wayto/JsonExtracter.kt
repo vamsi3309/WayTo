@@ -74,7 +74,7 @@ class JsonExtracter : AsyncTask<AssetManager, Int, JsonExtracter.JsonResult>() {
             var BulNos = IntArray(sch_data.length())
             for (i in 0..sch_data.length() - 1) {
                 BulNos[i] = sch_data.getJSONObject(i).getInt("buildingID")
-                Log.v("Building NO",""+BulNos[i]);
+                //Log.v("Building NO",""+BulNos[i]);
             }
             var locations= Array(bul_data.length()){ LatLng(0.0,0.0) }
             var builNames= Array(sch_data.length()){ "n" }
@@ -83,7 +83,7 @@ class JsonExtracter : AsyncTask<AssetManager, Int, JsonExtracter.JsonResult>() {
             for (i in 0..bul_data.length()-1)
             {
                 for (j in 0..BulNos.size -1) {
-                    Log.v("index",i.toString()+"  "+j.toString())
+                    //Log.v("index",i.toString()+"  "+j.toString())
                     if (bul_data.getJSONObject(i).getInt("id") == BulNos[j]) {
                         builNames?.set(j, bul_data.getJSONObject(i).getString("name"))
                         //Log.v("Building name",builNames[j]);
