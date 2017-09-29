@@ -115,8 +115,6 @@ class ScheduleFragment : Fragment() {
                 ecal.set(Calendar.MINUTE, Integer.parseInt(etime.substring(etime.indexOf(":") + 1, etime.indexOf(":") + 2)))
                 epochstartTime!![i] = scal.timeInMillis / 1000L
                 epochendTime!![i] = ecal.timeInMillis / 1000L
-                Log.d("start time:   ", "" + scal.timeInMillis / 1000L)
-                Log.d("end time:   ", "" + ecal.timeInMillis / 1000L)
             }
 
 

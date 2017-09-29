@@ -1,6 +1,7 @@
 package com.personal.vamsi.wayto
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.AssetManager
@@ -45,6 +46,8 @@ import java.util.TimeZone
 
  class MapsActivity : FragmentActivity(), OnMapReadyCallback, LocationListener {
 
+
+
      override fun onLocationChanged(p0: Location?) {
 
      }
@@ -62,12 +65,8 @@ import java.util.TimeZone
      }
 
     private var mMap: GoogleMap? = null
-    internal var schedule: JsonExtracter.Schedule? = null
-    //internal var results: DirectionsJSONParser.DirectionsResult?=null
-    internal var buildings: JsonExtracter.Buildings? = null
     internal var textDirections = StringBuilder()
-    internal var locations: Array<LatLng>? = null
-    internal var builNames: Array<String>? = null
+
     /*public MapsActivity(JsonExtracter.Schedule sch){
         schedule=sch;
         locations=schedule.schLocations;
@@ -85,10 +84,6 @@ import java.util.TimeZone
                 .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
     }
-
-
-
-
 
     /**
      * Manipulates the map once available.
@@ -172,8 +167,6 @@ import java.util.TimeZone
         bottomSheetDialogFragment.show(supportFragmentManager, bottomSheetDialogFragment.tag)
     }
 
-
-
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         when (requestCode) {
              1 -> {
@@ -206,18 +199,21 @@ import java.util.TimeZone
 
     }
 
-
     fun plotSchedule(){
+        val crit = Criteria()
         val mLocationManager : LocationManager = getSystemService(LOCATION_SERVICE) as LocationManager
-        var locationGPS=mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+        mLocationManager.requestLocationUpdates(mLocationManager.getBestProvider(crit,true),0,0f,this)
+        var locationGPS:Location = mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
         try{
-            if (locationGPS == null){
-                locationGPS=mLocationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
-            }
+            val dummy = locationGPS.latitude
+
         }
-        catch (e: NullPointerException){
-            Toast.makeText(this,"Problem with accessing the location " +
-                    "please try again after a while",Toast.LENGTH_LONG).show()
+        catch (e: NullPointerException) {
+            Log.v("Location Problem", "Location not found")
+            Toast.makeText(this, "Problem with accessing the location||" +
+                    "Choosing UGA location as default", Toast.LENGTH_LONG).show()
+            locationGPS.latitude = 33.9480053
+            locationGPS.longitude = -83.3773221
         }
         val builNames = intent.getStringArrayExtra("names")
         val lat = intent.extras.getDoubleArray("lat")
@@ -242,7 +238,7 @@ import java.util.TimeZone
                 }
             }
         }
-        Log.v("location lat",""+locationGPS.latitude)
+    //    Log.v("location lat",""+locationGPS.latitude)
         val policy = StrictMode.ThreadPolicy.Builder().permitAll().build()
         StrictMode.setThreadPolicy(policy)
         mMap!!.addMarker(MarkerOptions().position(LatLng(locationGPS.latitude,locationGPS.longitude)!!).title("My Location"))
@@ -263,7 +259,6 @@ import java.util.TimeZone
         bottomSheetDialogFragment.show(supportFragmentManager, bottomSheetDialogFragment.tag)
 
     }
-
 
 
 
@@ -324,7 +319,6 @@ import java.util.TimeZone
         bottomSheetDialogFragment.arguments = args
         bottomSheetDialogFragment.show(supportFragmentManager, bottomSheetDialogFragment.tag)
     }
-
 
     protected fun onPostExecute(result: List<List<HashMap<String, String>>>) {
         var points: ArrayList<LatLng>? = null
