@@ -5,11 +5,12 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.AssetManager
 import android.graphics.Color
-import android.location.LocationManager
+import android.location.*
 import android.os.StrictMode
 import android.support.design.widget.BottomSheetDialogFragment
 import android.support.v4.app.FragmentActivity
 import android.os.Bundle
+import android.os.SystemClock.sleep
 import android.support.annotation.NonNull
 import android.support.v4.app.ActivityCompat
 import android.util.Log
@@ -42,7 +43,23 @@ import java.util.Calendar
 import java.util.HashMap
 import java.util.TimeZone
 
-class MapsActivity : FragmentActivity(), OnMapReadyCallback {
+ class MapsActivity : FragmentActivity(), OnMapReadyCallback, LocationListener {
+
+     override fun onLocationChanged(p0: Location?) {
+
+     }
+
+     override fun onStatusChanged(p0: String?, p1: Int, p2: Bundle?) {
+
+     }
+
+     override fun onProviderEnabled(p0: String?) {
+
+     }
+
+     override fun onProviderDisabled(p0: String?) {
+
+     }
 
     private var mMap: GoogleMap? = null
     internal var schedule: JsonExtracter.Schedule? = null
@@ -70,6 +87,9 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
     }
 
 
+
+
+
     /**
      * Manipulates the map once available.
      * This callback is triggered when the map is ready to be used.
@@ -87,7 +107,10 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) !=
                 PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission
-        (this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        (this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)
+        {
+            Log.v("Nopermission","no permission")
+
             ActivityCompat.requestPermissions(this,
                     arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION), 1)
         }
@@ -98,18 +121,19 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
         {
             plotNavigation()
         }
-
-
     }
 
     fun plotNavigation(){
-        val mLocationManager : LocationManager = getSystemService(LOCATION_SERVICE) as LocationManager
-        val locationGPS=mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+        val crit = Criteria()
+        var mLocationManager : LocationManager = getSystemService(LOCATION_SERVICE) as LocationManager
+        mLocationManager.requestLocationUpdates(mLocationManager.getBestProvider(crit,true),0,0f,this)
+
+        var locationGPS=mLocationManager.getLastKnownLocation(mLocationManager.getBestProvider(crit,true))
         var fromName=""
         var fromLocation=LatLng(0.0,0.0)
         if(intent.getStringExtra("fromname").equals("My location")){
              fromName = "My Location"
-             fromLocation = LatLng(locationGPS.latitude,locationGPS.longitude)
+             fromLocation = LatLng(locationGPS.latitude, locationGPS.longitude)
         }
         else {
             fromName = intent.extras.getString("fromname")
@@ -126,11 +150,12 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
         mMap!!.moveCamera(CameraUpdateFactory.newLatLng(fromLocation))
         mMap!!.moveCamera(CameraUpdateFactory.newLatLngZoom(fromLocation, 15.0f))
         val calendar = Calendar.getInstance(TimeZone.getTimeZone("America/New_York"))
-        calendar.clear()
-        calendar.set(2017, 9, 20, 17, 15)
+        calendar.set(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH),
+                intent.getIntExtra("hours",calendar.get(Calendar.HOUR_OF_DAY)), intent.getIntExtra("mins",calendar.get(Calendar.MINUTE)))
+        Log.v("time ",""+calendar.timeInMillis)
         val policy = StrictMode.ThreadPolicy.Builder().permitAll().build()
         StrictMode.setThreadPolicy(policy)
-        plotDirections(getDirections(getRequestString(fromLocation, toLocation, mode, calendar.timeInMillis / 1000L)))
+        plotDirections(getDirections(getRequestString(fromLocation, toLocation, mode, "&departure_time="+calendar.timeInMillis / 1000L)))
         val bottomSheetDialogFragment = BottomSheetActivity()
         val args = Bundle()
         args.putString("key", textDirections.toString())
@@ -139,17 +164,16 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
     }
 
 
-    private var mLocationPermissionGranted: Boolean = false
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        mLocationPermissionGranted = false;
         when (requestCode) {
              1 -> {
+                 Log.v("onrequest","request")
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.size > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    mLocationPermissionGranted = true;
                     if(intent.getStringExtra("action").equals("schedule")){
+                        Log.v("permision","permission granted")
                         plotSchedule()
                     }
                     else if (intent.getStringExtra("action").equals("navigation"))
@@ -165,12 +189,18 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
                     startActivity(startMain)
                 }
             }
+
+            -1 ->{
+                Log.v("request","request failure")
+            }
         }
 
     }
 
-    fun plotSchedule(){
 
+    fun plotSchedule(){
+        val mLocationManager : LocationManager = getSystemService(LOCATION_SERVICE) as LocationManager
+        val locationGPS=mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
         val builNames = intent.getStringArrayExtra("names")
         val lat = intent.extras.getDoubleArray("lat")
         val lon = intent.getDoubleArrayExtra("lon")
@@ -194,38 +224,19 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
                 }
             }
         }
-        val mLocationManager : LocationManager = getSystemService(LOCATION_SERVICE) as LocationManager
-        val locationGPS=mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) !=
-                PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission
-        (this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
+        Log.v("location lat",""+locationGPS.latitude)
         val policy = StrictMode.ThreadPolicy.Builder().permitAll().build()
         StrictMode.setThreadPolicy(policy)
+        mMap!!.addMarker(MarkerOptions().position(LatLng(locationGPS.latitude,locationGPS.longitude)!!).title("My Location"))
         for (i in 0..starttime.size-1)
             mMap!!.addMarker(MarkerOptions().position(locations[i]!!).title(names[i]))
         textDirections.append("Class "+1+" :: Class name "+cnames[0]+"<br /><br />")
-        plotDirections(getDirections(getRequestString(LatLng(locationGPS.latitude,locationGPS.longitude), locations[0]!!, "transit", starttime[0])))
+        plotDirections(getDirections(getRequestString(LatLng(locationGPS.latitude,locationGPS.longitude), locations[0]!!, "transit", "&arrival_time="+starttime[0])))
         for (i in 0..starttime.size - 2) {
             textDirections.append("Class "+(i+2)+" :: Class name "+cnames[i+1]+"<br /><br />")
-            plotDirections(getDirections(getRequestString(locations[i]!!, locations[i + 1]!!, "transit", starttime[i + 1])))
+            plotDirections(getDirections(getRequestString(locations[i]!!, locations[i + 1]!!, "transit", "&arrival_time="+starttime[i + 1])))
         }
         mMap!!.moveCamera(CameraUpdateFactory.newLatLngZoom(locations[0], 15.0f))
-
-
-
-
-        /* mMap.addMarker(new MarkerOptions().position(new LatLng(33.918599,-83.367435)).title("Home"));
-        plotDirections(getDirections(getRequestString(new LatLng(33.918599,-83.367435),new LatLng(lat[0],lon[0]),"transit", 1508534117)));
-        plotDirections(getDirections(getRequestString(new LatLng(lat[0],lon[0]),new LatLng(lat[1],lon[1]),"transit", 1508534117)));*/
 
         val bottomSheetDialogFragment = BottomSheetActivity()
         val args = Bundle()
@@ -271,14 +282,13 @@ class MapsActivity : FragmentActivity(), OnMapReadyCallback {
         return sb.toString()
     }
 
-    fun getRequestString(start: LatLng, end: LatLng, mode: String, time: Long): String {
+    fun getRequestString(start: LatLng, end: LatLng, mode: String, time: String): String {
         val apilink = "https://maps.googleapis.com/maps/api/directions/json"
         val apikey = "&key=AIzaSyBb5uFimk3fSxnf77F81qrFs3I91BAAcjM"
         val source = "?origin="
         val destin = "&destination="
-        val dtime = "&arrival_time="
-        Log.v("url  ", apilink + source + start.latitude + "," + start.longitude + destin + end.latitude + "," + end.longitude + dtime + time + "&mode=" + mode + apikey)
-        return apilink + source + start.latitude + "," + start.longitude + destin + end.latitude + "," + end.longitude + dtime + time + "&mode=" + mode + apikey
+        Log.v("url  ", apilink + source + start.latitude + "," + start.longitude + destin + end.latitude + "," + end.longitude + time + "&mode=" + mode + apikey)
+        return apilink + source + start.latitude + "," + start.longitude + destin + end.latitude + "," + end.longitude + time + time + "&mode=" + mode + apikey
     }
 
     fun plotDirections(directions: String) {

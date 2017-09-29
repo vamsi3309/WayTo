@@ -73,8 +73,9 @@ class DirectionsJSONParser : AsyncTask<String, Int, DirectionsJSONParser.Directi
                                 || jSteps.getJSONObject(k).getString("travel_mode") == "BICYCLING") {
                             directions.append("" + (k + 1) + ".)" + (jSteps.get(k) as JSONObject).get("html_instructions") as String + "<br />")
                         } else if ((jSteps.get(k) as JSONObject).getString("travel_mode") == "TRANSIT") {
-                            directions.append("" + (k + 1) + ".)" + (jSteps.get(k) as JSONObject).getJSONObject("transit_details").getString("headsign") as String + "    BUS:  "
-                                    + (jSteps.get(k) as JSONObject).getJSONObject("transit_details").getJSONObject("line").getString("name") as String + "   ride for "
+                            directions.append("" + (k + 1) + ".)" + (jSteps.get(k) as JSONObject).getJSONObject("transit_details").getString("headsign") as String + " <br /><b>BUS:  "
+                                    + (jSteps.get(k) as JSONObject).getJSONObject("transit_details").getJSONObject("line").getString("name") as String
+                                    + " "+(jSteps.get(k) as JSONObject).getJSONObject("transit_details").getJSONObject("line").getString("short_name") as String+"</b> <br />Ride for "
                                     + (jSteps.get(k) as JSONObject).getJSONObject("transit_details").getString("num_stops") as String + " stops and get down at "
                                     + (jSteps.get(k) as JSONObject).getJSONObject("transit_details").getJSONObject("arrival_stop").getString("name") as String + "<br />")
                         } else {

@@ -6,12 +6,16 @@ import android.content.res.AssetManager
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v7.widget.CardView
+import android.support.v7.widget.LinearLayoutManager
+import android.support.v7.widget.RecyclerView
 import android.transition.TransitionManager
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.ImageView
+import android.widget.TextView
 import android.widget.Toast
 
 import com.google.android.gms.maps.model.LatLng
@@ -37,6 +41,51 @@ class ScheduleFragment : Fragment() {
 
     }
 
+
+    class CardSchedule{
+        var names = ArrayList<String>()
+        var classnames = ArrayList<String>()
+        var lat = ArrayList<Double>()
+        var lon = ArrayList<Double>()
+        var btime = ArrayList<Long>()
+        var entime = ArrayList<Long>()
+        var details = StringBuilder()
+
+        fun showOnCard(jsonResult: JsonExtracter.JsonResult,day: String,
+                       epochstartTime: LongArray,epochendTime: LongArray): String{
+            jsonResult!!.schedule!!.startDay!!.forEachIndexed { index, value ->
+                if (value.equals(day))
+                {
+                    this.details.append("Class Name: "+jsonResult!!.schedule!!.classNames!![index]+
+                            "\n\tStart time: "+jsonResult!!.schedule!!.startTime!![index]+
+                            " || End Time: "+jsonResult!!.schedule!!.endTime!![index]+"\n")
+                    this.names.add(jsonResult!!.schedule!!.builNames!![index].toString())
+                    this.classnames.add(jsonResult!!.schedule!!.classNames!![index].toString())
+                    this.lat.add(jsonResult!!.schedule!!.lat!![index])
+                    this.lon.add(jsonResult!!.schedule!!.lon!![index])
+                    this.btime.add(epochstartTime!![index])
+                    this.entime.add(epochendTime!![index])
+                }
+            }
+            if (this.names.size == 0)
+            {
+                return "No class for the day"
+            }
+            else return this.details.toString()
+        }
+
+        fun prepareIntent(intent: Intent): Intent{
+            intent.putExtra("names", this.names.toArray(arrayOfNulls<String>(this.names.size)))
+            intent.putExtra("lat", this.lat.toDoubleArray())
+            intent.putExtra("lon", this.lon.toDoubleArray())
+            //Log.v("index", "" + stime.size + "")
+            intent.putExtra("epochstime", this.btime.toLongArray())
+            intent.putExtra("epochetime", this.entime.toLongArray())
+            intent.putExtra("class_name",this.classnames.toArray(arrayOfNulls<String>(this.names.size)))
+            return intent
+        }
+
+    }
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
         // Inflate the layout for this fragment
@@ -71,254 +120,92 @@ class ScheduleFragment : Fragment() {
             }
 
 
-            val cv = view.findViewById<View>(R.id.card_view)
-            val tv = view.findViewById<View>(R.id.details)
+            val intent = Intent(activity, MapsActivity::class.java)
+            intent.putExtra("action","schedule")
 
-            /*
-            val newPage = view!!.findViewById<View>(R.id.mon) as Button
-            newPage.setOnClickListener {
-                val intent = Intent(activity, MapsActivity::class.java)
-                intent.putExtra("action","schedule")
-                val names = ArrayList<String>()
-                val classnames = ArrayList<String>()
-                val lat = ArrayList<Double>()
-                val lon = ArrayList<Double>()
-                val btime = ArrayList<Long>()
-                val entime = ArrayList<Long>()
-                for (i in 0..jsonResult!!.schedule!!.startDay!!.size-1) {
-                    if (jsonResult!!.schedule!!.startDay!![i].equals("Mon")) {
-                        names.add(jsonResult!!.schedule!!.builNames!![i].toString())
-                        classnames.add(jsonResult!!.schedule!!.classNames!![i].toString())
-                        lat.add(jsonResult!!.schedule!!.lat!![i])
-                        lon.add(jsonResult!!.schedule!!.lon!![i])
-                        btime.add(epochstartTime!![i])
-                        entime.add(epochendTime!![i])
-                    }
+
+            val monday = CardSchedule()
+            val mcv = view.findViewById<View>(R.id.mon_card)
+            val mtv = view.findViewById<TextView>(R.id.mon_details)
+            mtv.setText(monday.showOnCard(jsonResult!!,"Mon",epochstartTime,epochendTime))
+            mcv.setOnClickListener {
+                if (mtv.text.equals("No class for the day"))
+                {
+                    Toast.makeText(context,"No classes || No activity to show",Toast.LENGTH_SHORT).show()
                 }
-                val name = arrayOfNulls<String>(names.size)
-                val latit = DoubleArray(name.size)
-                val longit = DoubleArray(name.size)
-                val stime = LongArray(name.size)
-                val etime = LongArray(name.size)
-                val cnames = arrayOfNulls<String>(names.size)
-                for (i in name.indices) {
-                    name[i] = names[i]
-                    latit[i] = lat[i]
-                    longit[i] = lon[i]
-                    stime[i] = btime[i]
-                    etime[i] = entime[i]
-                    cnames[i]= classnames[i]
-                }
-                if (names.size == 0){
-                    Toast.makeText(context,"No classes for the day",Toast.LENGTH_LONG).show()
-                }
-                else {
-                    intent.putExtra("names", name)
-                    intent.putExtra("lat", latit)
-                    intent.putExtra("lon", longit)
-                    Log.v("index", "" + stime.size + "")
-                    intent.putExtra("epochstime", stime)
-                    intent.putExtra("epochetime", etime)
-                    intent.putExtra("class_name",cnames)
+                else{
+                    Toast.makeText(context,"Opening map view",Toast.LENGTH_SHORT).show()
+                    monday.prepareIntent(intent)
                     startActivity(intent)
                 }
             }
 
-
-            val tue = view.findViewById<View>(R.id.tue) as Button
-            tue.setOnClickListener {
-                val intent = Intent(activity, MapsActivity::class.java)
-                val names = ArrayList<String>()
-                val classnames = ArrayList<String>()
-                val lat = ArrayList<Double>()
-                val lon = ArrayList<Double>()
-                val btime = ArrayList<Long>()
-                val entime = ArrayList<Long>()
-                for (i in 0..jsonResult!!.schedule!!.startDay!!.size-1) {
-                    if (jsonResult!!.schedule!!.startDay!![i].equals("Tue")) {
-                        names.add(jsonResult!!.schedule!!.builNames!![i].toString())
-                        classnames.add(jsonResult!!.schedule!!.classNames!![i].toString())
-                        lat.add(jsonResult!!.schedule!!.lat!![i])
-                        lon.add(jsonResult!!.schedule!!.lon!![i])
-                        btime.add(epochstartTime!![i])
-                        entime.add(epochendTime!![i])
-                    }
+            val tuesday = CardSchedule()
+            val tcv = view.findViewById<View>(R.id.tue_card)
+            val ttv = view.findViewById<TextView>(R.id.tue_details)
+            ttv.setText(tuesday.showOnCard(jsonResult!!,"Tue",epochstartTime,epochendTime))
+            tcv.setOnClickListener {
+                if (ttv.text.equals("No class for the day"))
+                {
+                    Toast.makeText(context,"No classes || No activity to show",Toast.LENGTH_SHORT).show()
                 }
-                val name = arrayOfNulls<String>(names.size)
-                val latit = DoubleArray(name.size)
-                val longit = DoubleArray(name.size)
-                val stime = LongArray(name.size)
-                val etime = LongArray(name.size)
-                val cnames = arrayOfNulls<String>(names.size)
-                for (i in name.indices) {
-                    name[i] = names[i]
-                    latit[i] = lat[i]
-                    longit[i] = lon[i]
-                    stime[i] = btime[i]
-                    etime[i] = entime[i]
-                    cnames[i]= classnames[i]
-                }
-                if (names.size == 0){
-                    Toast.makeText(context,"No classes for today",Toast.LENGTH_LONG).show()
-                }
-                else {
-                    intent.putExtra("names", name)
-                    intent.putExtra("lat", latit)
-                    intent.putExtra("lon", longit)
-                    Log.v("index", "" + stime.size + "")
-                    intent.putExtra("epochstime", stime)
-                    intent.putExtra("epochetime", etime)
-                    intent.putExtra("class_name",cnames)
-                    startActivity(intent)
+                else{
+                Toast.makeText(context,"Opening map view",Toast.LENGTH_SHORT).show()
+                tuesday.prepareIntent(intent)
+                startActivity(intent)
                 }
             }
 
-            val wed = view.findViewById<View>(R.id.wed) as Button
-            wed.setOnClickListener {
-                val intent = Intent(activity, MapsActivity::class.java)
-                val names = ArrayList<String>()
-                val classnames = ArrayList<String>()
-                val lat = ArrayList<Double>()
-                val lon = ArrayList<Double>()
-                val btime = ArrayList<Long>()
-                val entime = ArrayList<Long>()
-                for (i in 0..jsonResult!!.schedule!!.startDay!!.size-1) {
-                    if (jsonResult!!.schedule!!.startDay!![i].equals("Wed")) {
-                        names.add(jsonResult!!.schedule!!.builNames!![i].toString())
-                        classnames.add(jsonResult!!.schedule!!.classNames!![i].toString())
-                        lat.add(jsonResult!!.schedule!!.lat!![i])
-                        lon.add(jsonResult!!.schedule!!.lon!![i])
-                        btime.add(epochstartTime!![i])
-                        entime.add(epochendTime!![i])
-                    }
+            val wednesday = CardSchedule()
+            val wcv = view.findViewById<View>(R.id.wed_card)
+            val wtv = view.findViewById<TextView>(R.id.wed_details)
+            wtv.setText(wednesday.showOnCard(jsonResult!!,"Wed",epochstartTime,epochendTime))
+            wcv.setOnClickListener {
+                if (wtv.text.equals("No class for the day"))
+                {
+                    Toast.makeText(context,"No classes || No activity to show",Toast.LENGTH_SHORT).show()
                 }
-                val name = arrayOfNulls<String>(names.size)
-                val latit = DoubleArray(name.size)
-                val longit = DoubleArray(name.size)
-                val stime = LongArray(name.size)
-                val etime = LongArray(name.size)
-                val cnames = arrayOfNulls<String>(names.size)
-                for (i in name.indices) {
-                    name[i] = names[i]
-                    latit[i] = lat[i]
-                    longit[i] = lon[i]
-                    stime[i] = btime[i]
-                    etime[i] = entime[i]
-                    cnames[i]= classnames[i]
-                }
-                if (names.size == 0){
-                    Toast.makeText(context,"No classes for today",Toast.LENGTH_LONG).show()
-                }
-                else {
-                    intent.putExtra("names", name)
-                    intent.putExtra("lat", latit)
-                    intent.putExtra("lon", longit)
-                    Log.v("index", "" + stime.size + "")
-                    intent.putExtra("epochstime", stime)
-                    intent.putExtra("epochetime", etime)
-                    intent.putExtra("class_name",cnames)
-                    startActivity(intent)
-                }
-            }
-
-            val thr = view.findViewById<View>(R.id.thr) as Button
-            thr.setOnClickListener {
-                val intent = Intent(activity, MapsActivity::class.java)
-                val names = ArrayList<String>()
-                val classnames = ArrayList<String>()
-                val lat = ArrayList<Double>()
-                val lon = ArrayList<Double>()
-                val btime = ArrayList<Long>()
-                val entime = ArrayList<Long>()
-                for (i in 0..jsonResult!!.schedule!!.startDay!!.size-1) {
-                    if (jsonResult!!.schedule!!.startDay!![i].equals("Thr")) {
-                        names.add(jsonResult!!.schedule!!.builNames!![i].toString())
-                        classnames.add(jsonResult!!.schedule!!.classNames!![i].toString())
-                        lat.add(jsonResult!!.schedule!!.lat!![i])
-                        lon.add(jsonResult!!.schedule!!.lon!![i])
-                        btime.add(epochstartTime!![i])
-                        entime.add(epochendTime!![i])
-                    }
-                }
-                val name = arrayOfNulls<String>(names.size)
-                val latit = DoubleArray(name.size)
-                val longit = DoubleArray(name.size)
-                val stime = LongArray(name.size)
-                val etime = LongArray(name.size)
-                val cnames = arrayOfNulls<String>(names.size)
-                for (i in name.indices) {
-                    name[i] = names[i]
-                    latit[i] = lat[i]
-                    longit[i] = lon[i]
-                    stime[i] = btime[i]
-                    etime[i] = entime[i]
-                    cnames[i]= classnames[i]
-                }
-                if (names.size == 0){
-                    Toast.makeText(context,"No classes for today",Toast.LENGTH_LONG).show()
-                }
-                else {
-                    intent.putExtra("names", name)
-                    intent.putExtra("lat", latit)
-                    intent.putExtra("lon", longit)
-                    Log.v("index", "" + stime.size + "")
-                    intent.putExtra("epochstime", stime)
-                    intent.putExtra("epochetime", etime)
-                    intent.putExtra("class_name",cnames)
-                    startActivity(intent)
+                else{
+                Toast.makeText(context,"Opening map view",Toast.LENGTH_SHORT).show()
+                wednesday.prepareIntent(intent)
+                startActivity(intent)
                 }
             }
 
 
-            val fri = view.findViewById<View>(R.id.fri) as Button
-            fri.setOnClickListener {
-
-                val intent = Intent(activity, MapsActivity::class.java)
-                val names = ArrayList<String>()
-                val classnames = ArrayList<String>()
-                val lat = ArrayList<Double>()
-                val lon = ArrayList<Double>()
-                val btime = ArrayList<Long>()
-                val entime = ArrayList<Long>()
-                for (i in 0..jsonResult!!.schedule!!.startDay!!.size-1) {
-                    if (jsonResult!!.schedule!!.startDay!![i].equals("Fri")) {
-                        names.add(jsonResult!!.schedule!!.builNames!![i].toString())
-                        classnames.add(jsonResult!!.schedule!!.classNames!![i].toString())
-                        lat.add(jsonResult!!.schedule!!.lat!![i])
-                        lon.add(jsonResult!!.schedule!!.lon!![i])
-                        btime.add(epochstartTime!![i])
-                        entime.add(epochendTime!![i])
-                    }
+            val thursday = CardSchedule()
+            val trcv = view.findViewById<View>(R.id.thr_card)
+            val trtv = view.findViewById<TextView>(R.id.thr_details)
+            trtv.setText(thursday.showOnCard(jsonResult!!,"Thr",epochstartTime,epochendTime))
+            trcv.setOnClickListener {
+                if (trtv.text.equals("No class for the day"))
+                {
+                    Toast.makeText(context,"No classes || No activity to show",Toast.LENGTH_SHORT).show()
                 }
-                val name = arrayOfNulls<String>(names.size)
-                val latit = DoubleArray(name.size)
-                val longit = DoubleArray(name.size)
-                val stime = LongArray(name.size)
-                val etime = LongArray(name.size)
-                val cnames = arrayOfNulls<String>(names.size)
-                for (i in name.indices) {
-                    name[i] = names[i]
-                    latit[i] = lat[i]
-                    longit[i] = lon[i]
-                    stime[i] = btime[i]
-                    etime[i] = entime[i]
-                    cnames[i]= classnames[i]
-                }
-                if (names.size == 0){
-                    Toast.makeText(context,"No classes for today",Toast.LENGTH_LONG).show()
-                }
-                else {
-                    intent.putExtra("names", name)
-                    intent.putExtra("lat", latit)
-                    intent.putExtra("lon", longit)
-                    Log.v("index", "" + stime.size + "")
-                    intent.putExtra("epochstime", stime)
-                    intent.putExtra("epochetime", etime)
-                    intent.putExtra("class_name",cnames)
-                    startActivity(intent)
+                else{
+                Toast.makeText(context,"Opening map view",Toast.LENGTH_SHORT).show()
+                thursday.prepareIntent(intent)
+                startActivity(intent)
                 }
             }
-*/
+
+
+            val friday = CardSchedule()
+            val fcv = view.findViewById<View>(R.id.fri_card)
+            val ftv = view.findViewById<TextView>(R.id.fri_details)
+            ftv.setText(friday.showOnCard(jsonResult!!,"Fri",epochstartTime,epochendTime))
+            fcv.setOnClickListener {
+                if (ftv.text.equals("No class for the day"))
+                {
+                    Toast.makeText(context,"No classes || No activity to show",Toast.LENGTH_SHORT).show()
+                }
+                else{
+                Toast.makeText(context,"Opening map view",Toast.LENGTH_SHORT).show()
+                friday.prepareIntent(intent)
+                startActivity(intent)
+                }
+            }
+
         } catch (e: Exception) {
             e.printStackTrace()
         }

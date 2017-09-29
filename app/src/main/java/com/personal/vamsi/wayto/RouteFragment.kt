@@ -6,6 +6,7 @@ import android.content.res.AssetManager
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.text.InputType
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -24,6 +25,7 @@ class RouteFragment : Fragment() {
     }
 
 
+    @Suppress("DEPRECATION")
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
         // Inflate the layout for this fragment
@@ -31,6 +33,7 @@ class RouteFragment : Fragment() {
         val view = inflater!!.inflate(R.layout.route_fragment, container, false)
         val fromView = view.findViewById<View>(R.id.From) as AutoCompleteTextView
         var locationSuggestions = buildings?.searchText!!.plus("My location")
+
         // array adapter for from textview
         val fromadapter: ArrayAdapter<String>? =
                 ArrayAdapter(
@@ -54,15 +57,25 @@ class RouteFragment : Fragment() {
 
         val mode = view.findViewById<View>(R.id.mode) as AutoCompleteTextView
         mode.setAdapter(modearray)
-        val calendar = Calendar.getInstance(TimeZone.getTimeZone("America/New_York"))
-        val searchTime = view.findViewById<View>(R.id.time) as EditText
-        searchTime.inputType = InputType.TYPE_NULL
+
+
+
+        var calendar = Calendar.getInstance(TimeZone.getTimeZone("America/New_York"))
+        val timeclick = view.findViewById<EditText>(R.id.timeView)
+        timeclick.setText("${calendar.get(Calendar.HOUR_OF_DAY)}:${calendar.get(Calendar.MINUTE)}")
 
         val timePickerDialog = TimePickerDialog(activity, TimePickerDialog.OnTimeSetListener { view, hourOfDay, minute ->
-            val calendar = Calendar.getInstance(TimeZone.getTimeZone("America/New_York"))
+            //val calendar = Calendar.getInstance(TimeZone.getTimeZone("America/New_York"))
             calendar.set(Calendar.HOUR_OF_DAY, hourOfDay)
             calendar.set(Calendar.MINUTE, minute)
-        }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true)
+            //Log.v("time in am and pm",""+calendar.timeInMillis)
+            timeclick.setText("${calendar.get(Calendar.HOUR_OF_DAY)}:${calendar.get(Calendar.MINUTE)}")
+        }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), false)
+
+        timeclick.setOnClickListener {
+            timePickerDialog.show()
+        }
+
         val directions = view.findViewById<Button>(R.id.button2)
         directions.setOnClickListener {
             val fromBuil = buildings!!.searchText
@@ -77,7 +90,7 @@ class RouteFragment : Fragment() {
                 intent.putExtra("fromlong", buildings!!.locations!![fromBuil!!.indexOf(fromView.text.toString())].longitude)
             }
             else{
-                Toast.makeText(context,"Invalid from location. Using GPS location!!!",Toast.LENGTH_LONG).show()
+                Toast.makeText(context,"Invalid from location. Using CURRENT GPS LOCATION!!!",Toast.LENGTH_LONG).show()
                 intent.putExtra("fromname","My location")
             }
 
@@ -88,18 +101,23 @@ class RouteFragment : Fragment() {
 
             }
             else{
-                Toast.makeText(context,"Invalid 'To Location'. Please try again!!!",Toast.LENGTH_LONG).show()
+                Toast.makeText(context,"Invalid 'To Location'. Choosing UGA LOCATION!!!",Toast.LENGTH_LONG).show()
                 intent.putExtra("toname", "UGA")
                 intent.putExtra("tolat", 33.9480053)
                 intent.putExtra("tolong",-83.3773221)
             }
             if (modes.contains(mode.text.toString())){
                 intent.putExtra("mode", mode.text.toString())
+                intent.putExtra("hours",calendar.get(Calendar.HOUR_OF_DAY))
+                intent.putExtra("mins",calendar.get(Calendar.MINUTE))
+                //intent.putExtra("hours",calendar.get())
                 startActivity(intent)
             }
             else{
                 Toast.makeText(context,"Invalid 'Transport Mode'. Using driving as default!!!",Toast.LENGTH_LONG).show()
                 intent.putExtra("mode","driving")
+                intent.putExtra("hours",calendar.get(Calendar.HOUR_OF_DAY))
+                intent.putExtra("mins",calendar.get(Calendar.MINUTE))
                 startActivity(intent)
             }
 
