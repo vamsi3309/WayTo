@@ -125,10 +125,19 @@ import java.util.TimeZone
 
     fun plotNavigation(){
         val crit = Criteria()
+
         var mLocationManager : LocationManager = getSystemService(LOCATION_SERVICE) as LocationManager
         mLocationManager.requestLocationUpdates(mLocationManager.getBestProvider(crit,true),0,0f,this)
-
         var locationGPS=mLocationManager.getLastKnownLocation(mLocationManager.getBestProvider(crit,true))
+        try{
+        if (locationGPS == null){
+            locationGPS=mLocationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+        }
+        }
+        catch (e: NullPointerException){
+            Toast.makeText(this,"Problem with accessing the location " +
+                    "please try again after a while",Toast.LENGTH_LONG).show()
+        }
         var fromName=""
         var fromLocation=LatLng(0.0,0.0)
         if(intent.getStringExtra("fromname").equals("My location")){
@@ -200,7 +209,16 @@ import java.util.TimeZone
 
     fun plotSchedule(){
         val mLocationManager : LocationManager = getSystemService(LOCATION_SERVICE) as LocationManager
-        val locationGPS=mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+        var locationGPS=mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+        try{
+            if (locationGPS == null){
+                locationGPS=mLocationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+            }
+        }
+        catch (e: NullPointerException){
+            Toast.makeText(this,"Problem with accessing the location " +
+                    "please try again after a while",Toast.LENGTH_LONG).show()
+        }
         val builNames = intent.getStringArrayExtra("names")
         val lat = intent.extras.getDoubleArray("lat")
         val lon = intent.getDoubleArrayExtra("lon")
